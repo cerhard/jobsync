@@ -138,6 +138,11 @@ export type McpSaveResumeReviewInput = z.infer<
 // version and links it to the job it was written for, so the job record
 // always shows exactly which version was sent. Deliberately does not touch
 // the user's default resume (that stays the baseline for match scoring).
+//
+// Accepts either the actual tailored file (preferred — preserves formatting
+// exactly, same as a human upload) or plain resumeText as a fallback when no
+// file exists. Exactly one of the two must be supplied; the handler does the
+// heavier size/magic-byte validation, same as the human upload route.
 export const McpSaveTailoredResumeInputShape = {
   jobId: z
     .string()
@@ -152,17 +157,43 @@ export const McpSaveTailoredResumeInputShape = {
     .describe(
       "A short label for this resume version, e.g. 'Acme Corp - Senior Backend Engineer'. Defaults to the job's company and title if omitted. A number is appended if the title is already taken.",
     ),
+  fileBase64: z
+    .string()
+    .min(1)
+    .max(APP_CONSTANTS.MCP_TAILORED_RESUME_MAX_BASE64_CHARS)
+    .optional()
+    .describe(
+      "Base64-encoded bytes of the tailored resume file (.docx or .pdf), preserving its exact formatting. Preferred over resumeText. Must be supplied together with fileName and mimeType.",
+    ),
+  fileName: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Original file name of the tailored resume, e.g. 'jane-doe-resume.docx'. Required when fileBase64 is supplied."),
+  mimeType: z
+    .enum(APP_CONSTANTS.RESUME_ALLOWED_MIME_TYPES)
+    .optional()
+    .describe(
+      "MIME type of the tailored resume file. Required when fileBase64 is supplied.",
+    ),
   resumeText: z
     .string()
     .min(APP_CONSTANTS.MCP_TAILORED_RESUME_MIN_LENGTH)
+    .optional()
     .describe(
-      "The full tailored resume content you produced for this job, as markdown or plain text. Saved verbatim as a new resume version — do not summarize or shorten it.",
+      "Fallback for when no tailored file exists: the full resume content as markdown or plain text, saved verbatim. Prefer fileBase64 when you have an actual tailored document — this loses formatting.",
     ),
 };
 
-export const McpSaveTailoredResumeSchema = z.object(
-  McpSaveTailoredResumeInputShape,
-);
+export const McpSaveTailoredResumeSchema = z
+  .object(McpSaveTailoredResumeInputShape)
+  .refine(
+    (v) => (v.fileBase64 ? !!v.fileName && !!v.mimeType : !!v.resumeText),
+    {
+      message:
+        "Supply either resumeText, or fileBase64 together with fileName and mimeType — not neither, and not a partial file trio.",
+    },
+  );
 export type McpSaveTailoredResumeInput = z.infer<
   typeof McpSaveTailoredResumeSchema
 >;

@@ -1,8 +1,14 @@
+import path from "path";
+import fs from "fs";
+import { mkdir, writeFile } from "fs/promises";
 import { z } from "zod";
 import prisma from "@/lib/db";
+import { APP_CONSTANTS } from "@/lib/constants";
 import { SectionType } from "@/models/profile.model";
 import { McpSaveTailoredResumeSchema } from "@/models/mcp.schema";
 import { checkMcpRateLimit } from "@/lib/mcp/rate-limit";
+import { getTimestampedFileName } from "@/lib/utils";
+import { validateResumeFileBytes } from "@/lib/resumeFileValidation";
 
 export async function handleSaveTailoredResume(
   input: z.infer<typeof McpSaveTailoredResumeSchema>,
@@ -39,8 +45,47 @@ export async function handleSaveTailoredResume(
     };
   }
 
+  // Same size/magic-byte checks as the human upload route in
+  // src/app/api/profile/resume/route.ts, since this is the same file store.
+  let fileBuffer: Buffer | undefined;
+  if (input.fileBase64) {
+    fileBuffer = Buffer.from(input.fileBase64, "base64");
+    if (fileBuffer.length === 0 || fileBuffer.length > APP_CONSTANTS.MAX_RESUME_FILE_SIZE_BYTES) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `File must be non-empty and under ${APP_CONSTANTS.MAX_RESUME_FILE_SIZE_BYTES / (1024 * 1024)}MB.`,
+          },
+        ],
+      };
+    }
+    if (!validateResumeFileBytes(fileBuffer, input.mimeType!)) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "File content does not match the declared mimeType (failed magic-byte check).",
+          },
+        ],
+      };
+    }
+  }
+
   const baseTitle =
     input.title?.trim() || `${job.Company.label} – ${job.JobTitle.label}`;
+
+  // Written before the transaction: disk writes can't be rolled back, so if
+  // this fails, nothing has been created in the DB yet to clean up.
+  let filePath: string | undefined;
+  if (fileBuffer) {
+    const uploadDir = path.join(APP_CONSTANTS.UPLOADS_DIR, "files", "resumes");
+    if (!fs.existsSync(uploadDir)) {
+      await mkdir(uploadDir, { recursive: true });
+    }
+    filePath = path.join(uploadDir, getTimestampedFileName(input.fileName!));
+    await writeFile(filePath, fileBuffer);
+  }
 
   try {
     const resumeId = await prisma.$transaction(async (tx) => {
@@ -68,26 +113,41 @@ export async function handleSaveTailoredResume(
         });
       }
 
+      let fileId: string | undefined;
+      if (filePath) {
+        const file = await tx.file.create({
+          data: {
+            fileName: input.fileName!,
+            filePath,
+            fileType: "resume",
+          },
+          select: { id: true },
+        });
+        fileId = file.id;
+      }
+
       const resume = await tx.resume.create({
-        data: { profileId: profile.id, title: uniqueTitle },
+        data: { profileId: profile.id, title: uniqueTitle, FileId: fileId },
         select: { id: true },
       });
 
-      // Stored as a single section rather than parsed into structured work
-      // experience/education entries — this tool preserves exactly what the
-      // agent produced (and sent), it doesn't re-run the AI-assisted import
-      // pipeline that structures a resume section-by-section.
-      const section = await tx.resumeSection.create({
-        data: {
-          resumeId: resume.id,
-          sectionTitle: "Tailored Resume",
-          sectionType: SectionType.SUMMARY,
-        },
-      });
-      await tx.resumeSection.update({
-        where: { id: section.id },
-        data: { summary: { create: { content: input.resumeText } } },
-      });
+      // Text path only: preserved as a single section rather than parsed
+      // into structured work experience/education entries — this stores
+      // exactly what the agent produced, it doesn't re-run the AI-assisted
+      // import pipeline that structures a resume section-by-section.
+      if (input.resumeText) {
+        const section = await tx.resumeSection.create({
+          data: {
+            resumeId: resume.id,
+            sectionTitle: "Tailored Resume",
+            sectionType: SectionType.SUMMARY,
+          },
+        });
+        await tx.resumeSection.update({
+          where: { id: section.id },
+          data: { summary: { create: { content: input.resumeText } } },
+        });
+      }
 
       await tx.job.update({
         where: { id: job.id },

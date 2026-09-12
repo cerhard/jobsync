@@ -148,6 +148,10 @@ export const APP_CONSTANTS = {
   // Lower than MCP_REVIEW_MIN_RESUME_LENGTH: a tailored resume is agent-
   // authored and can legitimately be more concise than a full review target.
   MCP_TAILORED_RESUME_MIN_LENGTH: 200,
+  // Base64 ceiling matching MAX_RESUME_FILE_SIZE_BYTES (5MB): ceil(bytes/3)*4,
+  // rounded up. The handler still checks decoded byte length precisely —
+  // this only rejects an oversized payload before it's decoded.
+  MCP_TAILORED_RESUME_MAX_BASE64_CHARS: 7_000_000,
   // Batch items are processed sequentially and each consumes one unit of the
   // shared MCP rate-limit budget, so this caps a single call at a sixth of it.
   MCP_BATCH_MAX_ITEMS: 10,

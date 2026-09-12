@@ -137,7 +137,7 @@ The agent resolves or creates the company, title, location, and tags by name, an
 
 When you add a job with a substantial description and you've set a **default resume** (Profile), the agent also analyzes the fit against that resume and saves a job match score — no round trip to the app needed. The result shows up on the job just like an in-app AI match, scores, recommendation, and write-up included.
 
-Had your agent tailor a resume for a specific job (with a resume-writing tool/skill, or just by asking it to rewrite one)? Ask it to save that version to the job it was written for — the agent creates a new resume entry and links it to the job, so opening that job later shows exactly which resume was sent, without touching your default resume.
+Had your agent tailor a resume for a specific job (with a resume-writing tool/skill, or just by asking it to rewrite one)? Ask it to save that version to the job it was written for — the agent creates a new resume entry, attaching the actual tailored file when it has one so formatting is preserved exactly (same as uploading it by hand), and links it to the job. Opening that job later shows exactly which resume was sent, without touching your default resume.
 
 #### 1. Generate a token
 

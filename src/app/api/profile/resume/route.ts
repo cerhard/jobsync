@@ -10,18 +10,8 @@ import path from "path";
 import fs from "fs";
 import { getTimestampedFileName } from "@/lib/utils";
 import { APP_CONSTANTS } from "@/lib/constants";
-import { PDF_MAGIC, ZIP_MAGIC } from "@/lib/ai/import/extract-text";
+import { RESUME_ALLOWED_MIME as ALLOWED_MIME, validateResumeFileBytes } from "@/lib/resumeFileValidation";
 import { log } from "@/lib/telemetry";
-
-const ALLOWED_MIME = new Set<string>(APP_CONSTANTS.RESUME_ALLOWED_MIME_TYPES);
-
-function validateFileBytes(buf: Buffer, mimeType: string): boolean {
-  if (mimeType === "application/pdf") return buf.subarray(0, 4).equals(PDF_MAGIC);
-  if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-    return buf.subarray(0, 4).equals(ZIP_MAGIC);
-  }
-  return false;
-}
 
 export const POST = async (req: NextRequest) => {
   const session = await auth();
@@ -55,7 +45,7 @@ export const POST = async (req: NextRequest) => {
         return NextResponse.json({ error: "Only PDF and .docx files are supported" }, { status: 400 });
       }
       const fileBytes = Buffer.from(await file.arrayBuffer());
-      if (!validateFileBytes(fileBytes, file.type)) {
+      if (!validateResumeFileBytes(fileBytes, file.type)) {
         return NextResponse.json({ error: "File content does not match declared type" }, { status: 400 });
       }
 
