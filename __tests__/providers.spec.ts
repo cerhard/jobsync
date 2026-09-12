@@ -10,6 +10,7 @@ vi.mock("@/lib/ai/provider-registry.server", () => ({
     deepseek: vi.fn(),
     ollama: vi.fn(),
     gemini: vi.fn(),
+    anthropic: vi.fn(),
   },
 }));
 
@@ -65,6 +66,35 @@ describe("getModel – openrouter", () => {
       "sk-or-key",
       "anthropic/claude-3-opus",
     );
+  });
+});
+
+describe("getModel – anthropic", () => {
+  const mockModelInstance = { modelId: "claude-sonnet-4-5" };
+
+  beforeEach(() => {
+    (PROVIDER_FACTORIES.anthropic as any).mockReturnValue(mockModelInstance);
+  });
+
+  it("resolves credentials and returns a model instance", async () => {
+    (resolveApiKey as any).mockResolvedValue("sk-ant-test-key");
+
+    const result = await getModel("anthropic", "claude-sonnet-4-5", "user-1");
+
+    expect(resolveApiKey).toHaveBeenCalledWith("user-1", "anthropic");
+    expect(PROVIDER_FACTORIES.anthropic).toHaveBeenCalledWith(
+      "sk-ant-test-key",
+      "claude-sonnet-4-5",
+    );
+    expect(result).toBe(mockModelInstance);
+  });
+
+  it("throws when Anthropic credential is not configured", async () => {
+    (resolveApiKey as any).mockResolvedValue(undefined);
+
+    await expect(
+      getModel("anthropic", "claude-sonnet-4-5", "user-1"),
+    ).rejects.toThrow("Anthropic credential not configured");
   });
 });
 

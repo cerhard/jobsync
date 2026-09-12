@@ -7,6 +7,7 @@ import {
   OpenaiModel,
   DeepseekModel,
   GeminiModel,
+  AnthropicModel,
 } from "@/models/ai.model";
 import {
   defaultUserSettings,
@@ -35,6 +36,8 @@ export function getDefaultModelForProvider(provider: AiProvider): string {
       return GeminiModel.GEMINI_2_0_FLASH;
     case AiProvider.OPENROUTER:
       return "anthropic/claude-3.5-sonnet";
+    case AiProvider.ANTHROPIC:
+      return AnthropicModel.CLAUDE_SONNET_4_5;
   }
 }
 

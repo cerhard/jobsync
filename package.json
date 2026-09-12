@@ -28,6 +28,7 @@
     "eval:view": "npm --prefix evals run eval:view"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.53",
     "@ai-sdk/deepseek": "^2.0.4",
     "@ai-sdk/google": "^3.0.53",
     "@ai-sdk/openai": "^3.0.2",
@@ -111,6 +112,7 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "15.5.21",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.12",
     "prisma": "^6.19.0",
     "tailwindcss": "^4.3.3",

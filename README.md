@@ -248,6 +248,16 @@ Works with [Ollama](https://ollama.com) to run AI models locally on your machine
 </details>
 
 <details>
+<summary><strong>Anthropic</strong></summary>
+
+- Get your API key at [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
+- Add your API key in **Settings > AI Settings**
+- Select **Anthropic** as the provider and choose your preferred Claude model
+- Available models are fetched dynamically from the Anthropic API
+
+</details>
+
+<details>
 <summary><strong>DeepSeek</strong></summary>
 
 - Get your API key at [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)

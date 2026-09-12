@@ -5,11 +5,11 @@ describe("AI_PROVIDERS", () => {
     expect(AI_PROVIDERS).toContain("openrouter");
   });
 
-  it("contains exactly 5 providers", () => {
-    expect(AI_PROVIDERS).toHaveLength(5);
+  it("contains exactly 6 providers", () => {
+    expect(AI_PROVIDERS).toHaveLength(6);
   });
 
-  it("contains ollama, openai, deepseek, openrouter, gemini", () => {
+  it("contains ollama, openai, deepseek, openrouter, gemini, anthropic", () => {
     expect(AI_PROVIDERS).toEqual(
       expect.arrayContaining([
         "ollama",
@@ -17,8 +17,81 @@ describe("AI_PROVIDERS", () => {
         "deepseek",
         "openrouter",
         "gemini",
+        "anthropic",
       ]),
     );
+  });
+});
+
+describe("PROVIDER_REGISTRY – anthropic entry", () => {
+  const entry = PROVIDER_REGISTRY.anthropic;
+
+  it("exists in the registry", () => {
+    expect(entry).toBeDefined();
+  });
+
+  it("has id 'anthropic'", () => {
+    expect(entry.id).toBe("anthropic");
+  });
+
+  it("has displayName 'Anthropic'", () => {
+    expect(entry.displayName).toBe("Anthropic");
+  });
+
+  it("uses api-key credential type", () => {
+    expect(entry.credentialType).toBe("api-key");
+  });
+
+  it("is categorized as cloud", () => {
+    expect(entry.category).toBe("cloud");
+  });
+
+  it("uses ANTHROPIC_API_KEY env var", () => {
+    expect(entry.envVar).toBe("ANTHROPIC_API_KEY");
+  });
+
+  it("has correct modelsEndpoint", () => {
+    expect(entry.modelsEndpoint).toBe("anthropic/models");
+  });
+
+  it("does not require a running check", () => {
+    expect(entry.requiresRunningCheck).toBe(false);
+  });
+
+  it("does not support keepAlive", () => {
+    expect(entry.supportsKeepAlive).toBe(false);
+  });
+
+  it("has password input type", () => {
+    expect(entry.keyConfig.inputType).toBe("password");
+  });
+
+  it("marks key as sensitive", () => {
+    expect(entry.keyConfig.sensitive).toBe(true);
+  });
+
+  it("placeholder starts with sk-ant-", () => {
+    expect(entry.keyConfig.placeholder).toMatch(/^sk-ant-/);
+  });
+
+  it("has no defaultCredential", () => {
+    expect(entry.defaultCredential).toBeUndefined();
+  });
+
+  describe("parseModelsResponse", () => {
+    it("maps model ids", () => {
+      const data = {
+        data: [{ id: "claude-sonnet-4-5" }, { id: "claude-haiku-4-5" }],
+      };
+      expect(entry.parseModelsResponse!(data)).toEqual([
+        "claude-sonnet-4-5",
+        "claude-haiku-4-5",
+      ]);
+    });
+
+    it("returns empty array when data property is missing", () => {
+      expect(entry.parseModelsResponse!({})).toEqual([]);
+    });
   });
 });
 
