@@ -145,6 +145,9 @@ export const APP_CONSTANTS = {
   DESCRIPTION_FULL_MIN_WORDS: 150,
   MCP_MATCH_PROVIDER_MARKER: "mcp",
   MCP_REVIEW_MIN_RESUME_LENGTH: 400,
+  // Lower than MCP_REVIEW_MIN_RESUME_LENGTH: a tailored resume is agent-
+  // authored and can legitimately be more concise than a full review target.
+  MCP_TAILORED_RESUME_MIN_LENGTH: 200,
   // Batch items are processed sequentially and each consumes one unit of the
   // shared MCP rate-limit budget, so this caps a single call at a sixth of it.
   MCP_BATCH_MAX_ITEMS: 10,

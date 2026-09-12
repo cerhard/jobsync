@@ -13,6 +13,8 @@ import {
   McpReviewResumeSchema,
   McpSaveResumeReviewInputShape,
   McpSaveResumeReviewSchema,
+  McpSaveTailoredResumeInputShape,
+  McpSaveTailoredResumeSchema,
   McpFindJobInputShape,
   McpFindJobSchema,
   McpUpdateJobInputShape,
@@ -27,6 +29,7 @@ import { handleAddQuestion } from "@/lib/mcp/tools/addQuestion";
 import { handleSaveMatchResult } from "@/lib/mcp/tools/saveMatchResult";
 import { handleReviewResume } from "@/lib/mcp/tools/reviewResume";
 import { handleSaveResumeReview } from "@/lib/mcp/tools/saveResumeReview";
+import { handleSaveTailoredResume } from "@/lib/mcp/tools/saveTailoredResume";
 import { handleFindJob } from "@/lib/mcp/tools/findJob";
 import { handleUpdateJob } from "@/lib/mcp/tools/updateJob";
 import { handleAddJobsBatch } from "@/lib/mcp/tools/addJobsBatch";
@@ -262,6 +265,29 @@ async function handler(req: Request): Promise<Response> {
         };
       }
       return handleSaveResumeReview(parsed.data, userId, tokenName);
+    },
+  );
+
+  server.tool(
+    "save_tailored_resume",
+    MCP_TOOL_DESCRIPTIONS.save_tailored_resume,
+    McpSaveTailoredResumeInputShape,
+    async (rawInput) => {
+      if (!auth.scopes.includes("resume:write")) {
+        return {
+          content: [
+            { type: "text" as const, text: "Insufficient scope. Required: resume:write" },
+          ],
+        };
+      }
+      const parsed = McpSaveTailoredResumeSchema.safeParse(rawInput);
+      if (!parsed.success) {
+        const issues = parsed.error.issues.map((i) => i.message).join("; ");
+        return {
+          content: [{ type: "text" as const, text: `Validation error: ${issues}` }],
+        };
+      }
+      return handleSaveTailoredResume(parsed.data, userId);
     },
   );
 

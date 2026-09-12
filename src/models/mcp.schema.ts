@@ -134,6 +134,39 @@ export type McpSaveResumeReviewInput = z.infer<
   typeof McpSaveResumeReviewSchema
 >;
 
+// save_tailored_resume — persists an agent-tailored resume as a new resume
+// version and links it to the job it was written for, so the job record
+// always shows exactly which version was sent. Deliberately does not touch
+// the user's default resume (that stays the baseline for match scoring).
+export const McpSaveTailoredResumeInputShape = {
+  jobId: z
+    .string()
+    .min(1)
+    .describe(
+      "The id of the job this resume was tailored for, as returned by add_job or find_job. Only jobs created through MCP can be linked.",
+    ),
+  title: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "A short label for this resume version, e.g. 'Acme Corp - Senior Backend Engineer'. Defaults to the job's company and title if omitted. A number is appended if the title is already taken.",
+    ),
+  resumeText: z
+    .string()
+    .min(APP_CONSTANTS.MCP_TAILORED_RESUME_MIN_LENGTH)
+    .describe(
+      "The full tailored resume content you produced for this job, as markdown or plain text. Saved verbatim as a new resume version — do not summarize or shorten it.",
+    ),
+};
+
+export const McpSaveTailoredResumeSchema = z.object(
+  McpSaveTailoredResumeInputShape,
+);
+export type McpSaveTailoredResumeInput = z.infer<
+  typeof McpSaveTailoredResumeSchema
+>;
+
 // find_job — URL is the only lookup key; it's the one identifier an agent
 // reliably has from a job board, and it's what add_job dedupes on.
 export const McpFindJobInputShape = {

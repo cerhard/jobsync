@@ -21,6 +21,8 @@ export const MCP_TOOL_DESCRIPTIONS = {
     "Fetch the user's default resume so you can review it. Returns the normalized resume text plus a directive — produce the review yourself, then call save_resume_review with the result.",
   save_resume_review:
     "Persist a resume review (produced by you, the agent) against the resume previously handed to you by review_resume. Call this after review_resume hands you a review directive.",
+  save_tailored_resume:
+    "Save a resume you tailored for a specific job and link it to that job as a new resume version, so JobSync always shows exactly which resume was sent for it. Creates a new resume entry — it does not overwrite the user's default resume. Call this after producing a tailored resume for a job already added with add_job.",
 } as const;
 
 export type McpToolName = keyof typeof MCP_TOOL_DESCRIPTIONS;
